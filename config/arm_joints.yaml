@@ -1,0 +1,6 @@
+type: "position_controllers/JointGroupPositionController"
+joints: 
+ - base_link_armLink0_joint
+ - armLink0_armLink1_joint
+ - armLink1_armLink2_joint
+ - armLink2_armLink3_joint

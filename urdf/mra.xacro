@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+
+<robot name="mobileRoboticArm" xmlns:xacro="http://ros.org/wiki/xacro">
+
+	<!--Materials Start-->
+	<material name="black">
+		<color rgba="0.0 0.0 0.0 1.0"/>
+	</material>
+
+	<material name="white">
+		<color rgba="1.0 1.0 1.0 1.0"/>
+	</material>
+
+	<material name="red">
+		<color rgba="0.8 0.0 0.0 1.0"/>
+	</material>
+
+	<material name="blue">
+		<color rgba="0.0 0.0 0.8 1.0"/>
+	</material>
+
+	<material name="green">
+		<color rgba="0.0 0.8 0.0 1.0"/>
+	</material>
+
+	<material name="grey">
+		<color rgba="0.5 0.5 0.5 1.0"/>
+	</material>
+
+	<material name="orange">
+		<color rgba="${255/255} ${108/255} ${10/255} 1.0"/>
+	</material>
+
+	<material name="brown">
+		<color rgba="${222/255} ${207/255} ${195/255} 1.0"/>
+	</material>
+	<!--Materials End-->
+
+	<!--MACROS START-->
+
+	<!--Inertial Macro-->
+	<xacro:macro name="default_inertial" params="mass ixx:=1 ixy:=0 ixz:=0 iyy:=1 iyz:=0 izz:=1">
+		<inertial>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<mass value="${mass}"/>
+			<inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+		</inertial>
+	</xacro:macro>
+	<!--Inertial Macro-->
+
+	<!--Arm Link Macro-->
+	<xacro:macro name="arm_link" params="suffix parent reflect height color mesh_path mass joint_type lower_limit upper_limit axis_x axis_y axis_z ixx:=1 ixy:=0 ixz:=0 iyy:=1 iyz:=0 izz:=1">
+		<link name="armLink${suffix}">
+			<visual>
+				<origin xyz="0 0 0" rpy="0 0 0"/>
+				<geometry>
+					<!--mesh filename="package://innomech/meshes/linked_mx_64t.stl" scale="0.01 0.01 0.01"/-->
+					<mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+				</geometry>
+				<material name="${color}"/>
+			</visual>
+
+			<collision>
+				<origin xyz="0 0 0" rpy="0 0 0"/>
+				<geometry>
+					<mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+				</geometry>
+			</collision>
+			<xacro:default_inertial mass="${mass}" ixx="${ixx}"  ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+		</link>	
+
+		<!-- Joint-->
+		<joint name="${parent}_armLink${suffix}_joint" type="${joint_type}">
+			<parent link="${parent}"/>
+			<child link="armLink${suffix}"/>
+			<origin xyz="0 0 ${height}" rpy="0 0 0"/>
+			<axis xyz="${axis_x} ${axis_y} ${axis_z}"/>
+			<limit velocity="4.8" effort="1" lower="${lower_limit}" upper="${upper_limit}" />
+		</joint>
+
+		<transmission name="armLink${suffix}_transmission" type="SimpleTransmission">
+			<type>transmission_interface/SimpleTransmission</type>
+			<actuator name="$armLink${suffix}_motor">
+				<mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+			<joint name="${parent}_armLink${suffix}_joint">
+				<hardwareInterface>PositionJointInterface</hardwareInterface>
+			</joint>
+		</transmission>
+	</xacro:macro>
+	<!--Arm Link Macro-->
+
+	<!--Wheel Macro-->
+	<xacro:macro name="wheel_link" params="suffix parent reflect height color mesh_path mass joint_type:=continuous ixx:=1 ixy:=0 ixz:=0 iyy:=1 iyz:=0 izz:=1">
+		<link name="wheel_${suffix}">
+			<visual>
+				<origin xyz="0 0 0" rpy="${-reflect*pi/2} 0 0"/>
+				<geometry>
+					<!--mesh filename="package://innomech/meshes/wheel_left_link2.stl" scale="0.01 0.01 0.01"/-->
+					<mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+				</geometry>
+				<material name="${color}"/>
+			</visual>
+
+			<collision>
+				<origin xyz="0 0 0" rpy="${-reflect*pi/2} 0 0"/>
+				<geometry>
+					<mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+				</geometry>
+				<surface>
+					<friction>
+						<ode>
+							<mu>0.05</mu>
+							<mu2>0.05</mu2>
+						</ode>
+					</friction>
+				</surface>
+			</collision>
+			<xacro:default_inertial mass="${mass}"/>
+		</link>	
+
+		<!-- Joint-->
+		<joint name="wheel_${suffix}_joint" type="${joint_type}">
+			<parent link="${parent}"/>
+			<child link="wheel_${suffix}"/>
+			<origin xyz="-0.05 ${reflect*0.14} 0.05" rpy="0 0 0"/>
+			<axis xyz="0 1 0"/>
+			<!--limit velocity="4.8" effort="1" lower="${-pi}" upper="${pi}" /-->
+		</joint>
+
+		<transmission name="wheel_${suffix}_transmission" type="SimpleTransmission">
+			<type>transmission_interface/SimpleTransmission</type>
+			<actuator name="$wheel_${suffix}_motor">
+				<mechanicalReduction>1</mechanicalReduction>
+				<hardwareInterface>EffortJointInterface</hardwareInterface>
+			</actuator>
+
+			<joint name="wheel_${suffix}_joint">
+				<hardwareInterface>PositionJointInterface</hardwareInterface>
+				<hardwareInterface>EffortJointInterface</hardwareInterface>
+			</joint>
+		</transmission>
+	</xacro:macro>
+	<!--Wheel Macro-->
+
+	<!--MACROS END-->
+
+	<!-- Base_link -->
+	<link name="base_link">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/base_link2.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+			<material name="white"/>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/base_link2.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+		</collision>
+
+		<xacro:default_inertial mass="1.488" ixx="0.01143272" ixy="0.000016903" ixz="-0.000443487" iyy="0.000016903" iyz="-0.000443487" izz="-0.000443487"/>
+	</link>
+
+	<link name="point_wheel">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="0.005"/>
+			</geometry>
+			<material name="white"/>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="0.01"/>
+			</geometry>
+		</collision>
+		<xacro:default_inertial mass="0.01"/>
+	</link>
+
+	<joint name="point_wheel_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="point_wheel"/>
+		<origin xyz="0.08 0.0 -0.0025" rpy="0 0 0"/>
+		<axis xyz="1 1 1"/>		
+		<limit effort="30" velocity="1.0"/>	
+	</joint>
+
+	<!-- Left Wheel -->
+	<xacro:wheel_link suffix="left" parent="base_link" reflect="1" height="1" color="black" mesh_path="package://innomech/meshes/wheel_left_link2.stl" mass="0.240" ixx="0.000211589" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+	<!-- Left Wheel -->
+
+	<!-- Right Wheel -->
+	<xacro:wheel_link suffix="right" parent="base_link" reflect="-1" height="1" color="black" mesh_path="package://innomech/meshes/wheel_left_link2.stl" mass="0.240" ixx="0.000211589" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+	<!-- Right Wheel -->
+
+	<!-- Link0 -->
+	<xacro:arm_link suffix="0" parent="base_link" reflect="1" height="0.25" color="red" mesh_path="package://innomech/meshes/mx-64t2.stl" mass="0.135" joint_type="revolute" lower_limit="${-pi}" upper_limit="${pi}" axis_x="0" axis_y="0" axis_z="1"/>
+	<!-- Link0 -->
+
+	<!-- Link1 -->
+	<xacro:arm_link suffix="1" parent="armLink0" reflect="1" height="0.0" color="red" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
+	<!-- Link1 -->
+
+	<!-- Link2 -->
+	<xacro:arm_link suffix="2" parent="armLink1" reflect="1" height="0.12" color="green" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
+	<!-- Link2 -->
+
+	<!-- Link3 -->
+	<xacro:arm_link suffix="3" parent="armLink2" reflect="1" height="0.12" color="grey" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
+	<!-- Link3 -->
+
+	<gazebo>
+		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+			<robotNamespace>/</robotNamespace>
+		</plugin>
+	</gazebo>
+
+</robot>

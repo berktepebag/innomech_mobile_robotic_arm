@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+
+<robot name="mobileRoboticArm">
+
+	<material name="black">
+		<color rgba="0.0 0.0 0.0 1.0"/>
+	</material>
+
+	<material name="white">
+		<color rgba="1.0 1.0 1.0 1.0"/>
+	</material>
+
+	<material name="red">
+		<color rgba="0.8 0.0 0.0 1.0"/>
+	</material>
+
+	<material name="blue">
+		<color rgba="0.0 0.0 0.8 1.0"/>
+	</material>
+
+	<material name="green">
+		<color rgba="0.0 0.8 0.0 1.0"/>
+	</material>
+
+	<material name="grey">
+		<color rgba="0.5 0.5 0.5 1.0"/>
+	</material>
+
+	<material name="orange">
+		<color rgba="${255/255} ${108/255} ${10/255} 1.0"/>
+	</material>
+
+	<material name="brown">
+		<color rgba="${222/255} ${207/255} ${195/255} 1.0"/>
+	</material>
+
+
+	<!-- World -->
+	<link name="world">
+	</link>
+
+	<!-- World fixed joint-->
+	<joint name="world_fixed" type="fixed">
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<parent link="world"/>
+		<child link="base_link"/>
+	</joint>
+
+
+	<!-- Base_link -->
+	<link name="base_link">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/base_link2.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+			<material name="white"/>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/base_link2.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+		</collision>
+
+		<inertial>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<mass value="10"/>
+			<inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+		</inertial>
+	</link>
+
+	<!-- Joint BaseToArm1 -->
+	<joint name="baseToArm1" type="revolute">
+		<parent link="base_link"/>
+		<child link="motor1"/>
+		<origin xyz="0 0 0.25" rpy="0 0 0"/>
+		<axis xyz="0 0 1"/>
+		<limit velocity="4.8" effort="1" lower="${-pi*0.9}" upper="${pi*0.9}" />
+	</joint>
+
+	<!-- Motor1 -->
+	<link name="motor1">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/mx-64t2.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+			<material name="blue"/>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/mx-64t2.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+		</collision>
+	</link>	
+
+	<!-- Joint BaseToArm1 -->
+	<joint name="motor1ToArm1" type="revolute">
+		<parent link="motor1"/>
+		<child link="arm_link_1"/>
+		<origin xyz="0 0.0 0" rpy="0 0 0"/>
+		<axis xyz="0 1 0"/>
+		<limit velocity="4.8" effort="1" lower="${-pi*0.9}" upper="${pi*0.9}" />
+	</joint>
+
+	<!-- Link1 -->
+	<link name="arm_link_1">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/linked_mx_64t.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+			<material name="red"/>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/linked_mx_64t.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+		</collision>
+	</link>	
+
+	<!-- Joint Link1toLink2 -->
+	<joint name="link1ToLink2" type="revolute">
+		<parent link="arm_link_1"/>
+		<child link="arm_link_2"/>
+		<origin xyz="0 0.0 0.12" rpy="0 0 0"/>
+		<axis xyz="0 1 0"/>
+		<limit velocity="4.8" effort="1" lower="${-pi*0.9}" upper="${pi*0.9}" />
+	</joint>
+
+	<!-- Link2 -->
+	<link name="arm_link_2">
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/linked_mx_64t.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+			<material name="white"/>
+		</visual>
+
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<mesh filename="package://innomech/meshes/linked_mx_64t.stl" scale="0.01 0.01 0.01"/>
+			</geometry>
+		</collision>
+	</link>	
+
+</robot>
