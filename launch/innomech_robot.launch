@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="model" default="$(find innomech)/urdf/mra_simple.xacro"/>
+	<arg name="model" default="$(find innomech)/urdf/mra.xacro"/>
 	<arg name="rvizconfig" default="$(find innomech)/rviz/urdf.rviz"/>
 
 	<include file="$(find innomech)/launch/gazebo.launch">
