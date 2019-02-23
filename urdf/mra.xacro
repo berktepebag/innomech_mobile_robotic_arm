@@ -105,7 +105,7 @@
 			<collision>
 				<origin xyz="0 0 0" rpy="${-reflect*pi/2} 0 0"/>
 				<geometry>
-					<mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+					<cylinder radius="0.06" length="0.025"/>
 				</geometry>
 				<surface>
 					<friction>
@@ -123,7 +123,7 @@
 		<joint name="wheel_${suffix}_joint" type="${joint_type}">
 			<parent link="${parent}"/>
 			<child link="wheel_${suffix}"/>
-			<origin xyz="-0.05 ${reflect*0.14} 0.05" rpy="0 0 0"/>
+			<origin xyz="-0.04 ${reflect*0.13} 0.05" rpy="0 0 0"/>
 			<axis xyz="0 1 0"/>
 			<!--limit velocity="4.8" effort="1" lower="${-pi}" upper="${pi}" /-->
 		</joint>
@@ -132,12 +132,11 @@
 			<type>transmission_interface/SimpleTransmission</type>
 			<actuator name="$wheel_${suffix}_motor">
 				<mechanicalReduction>1</mechanicalReduction>
-				<hardwareInterface>EffortJointInterface</hardwareInterface>
+				<hardwareInterface>VelocityJointInterface</hardwareInterface>
 			</actuator>
 
 			<joint name="wheel_${suffix}_joint">
-				<hardwareInterface>PositionJointInterface</hardwareInterface>
-				<hardwareInterface>EffortJointInterface</hardwareInterface>
+				<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
 			</joint>
 		</transmission>
 	</xacro:macro>
@@ -156,9 +155,9 @@
 		</visual>
 
 		<collision>
-			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<origin xyz="0 0 0.075" rpy="0 0 0"/>
 			<geometry>
-				<mesh filename="package://innomech/meshes/base_link2.stl" scale="0.01 0.01 0.01"/>
+				<box size="0.2 0.2 0.14" />
 			</geometry>
 		</collision>
 
@@ -177,7 +176,7 @@
 		<collision>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
-				<sphere radius="0.01"/>
+				<sphere radius="0.005"/>
 			</geometry>
 		</collision>
 		<xacro:default_inertial mass="0.01"/>
@@ -186,9 +185,9 @@
 	<joint name="point_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="point_wheel"/>
-		<origin xyz="0.08 0.0 -0.0025" rpy="0 0 0"/>
-		<axis xyz="1 1 1"/>		
-		<limit effort="30" velocity="1.0"/>	
+		<origin xyz="0.08 0.0 -0.0035" rpy="0 0 0"/>
+		<axis xyz="1 1 0"/>		
+		<limit effort="1" velocity="10.0"/>	
 	</joint>
 
 	<!-- Left Wheel -->
@@ -214,6 +213,7 @@
 	<!-- Link3 -->
 	<xacro:arm_link suffix="3" parent="armLink2" reflect="1" height="0.12" color="grey" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
 	<!-- Link3 -->
+	
 
 	<gazebo>
 		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="model" default="$(find innomech)/urdf/mra_simple.xacro"/>
+	<arg name="rvizconfig" default="$(find innomech)/rviz/urdf.rviz"/>
+
+	<include file="$(find innomech)/launch/gazebo.launch">
+		<arg name="model" value="$(arg model)"/>
+	</include>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)"/>
+
+	<rosparam command="load" file="$(find innomech)/config/joints.yaml" ns="mra_joint_state_controller"/>
+
+	<rosparam command="load" file="$(find innomech)/config/arm_joints.yaml" ns="mra_armLinks_controller"/>
+
+	<rosparam command="load" file="$(find innomech)/config/my_diff_drive.yaml" />
+
+	<node name="mra_controller_spawner" pkg="controller_manager" type="spawner" args="
+		mra_joint_state_controller
+		mra_armLinks_controller
+		mobile_base_controller
+		"/> 
+
+</launch>
