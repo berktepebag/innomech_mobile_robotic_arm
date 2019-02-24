@@ -1,0 +1,9 @@
+#Run the Linux Joystick variables
+rosrun joy joy_node
+rostopic echo joy
+
+#Run the joystick to robot converter
+rosrun innomech innomech src/innomech/src/robot_controller.cpp 
+
+
+
