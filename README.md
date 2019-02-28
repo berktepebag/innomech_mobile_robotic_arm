@@ -10,81 +10,192 @@ These qualities once made asbestos very profitable for business, but unfortunate
 ## INNOMECH - Mobile Robotic Arm
 
 To remove asbestos many precautions has to be taken before and after. 
-<img width="200" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="../imgs/Asbestos-Abatement-Header.jpg">
+<img width="600" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="imgs/Asbestos-Abatement-Header.jpg">
 
 
-## my_imfilter(image, filter):
+## A Robot To Remove Asbestos Without Human Interaction
 
-Instead of using built in filters I built a new filtering function.
+Instead of using human force, our robot will do the removing of the asbestos. This will save:
+1. **Time:** A human can work maximum 2 hours under those heavy conditions. A machine can work all day, week and year.
+2. **Health:** Even with taking best pre-cautions humans can be affected with asbestos. Decreasing the number of humans working with asbestos will also deacrase the health risks.
+3. **Money:** A robot can remove asbestos much faster than a human, can reach places humans cannot and does not affected by the asbestos.
 
-Checking if filter is valid, if not throw error.
+|<img width="300" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="imgs/plan_rob.jpg">|<img width="300" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="imgs/IMG_20190207_113329.jpg">|
 
+## Configuration
+
+### Hardware 
+
+In our robot we prefered DYNAMIXEL cards and motors:
+
+|Components:|
+|-------|
+|
+1. OpenCM 9.04C
+2. OpenCM EXP 480
+3. 6 x MX-64
+|<img width="300" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="imgs/cm904c.jpg">|
+
+### Software
+
+The robot is built on Ubuntu 16.04 (Xenial) with ROS Kinetic Kame. For virtual environment Gazebo is used.
+
+## Code Explanation
+
+From this point code will be explained part bu part.
+
+### mra.xacro
+
+### Inertial Macro
+
+To be able to use the gravitational forces in the Gazebo environment we have to define inertial properties of the links. Since we are going to use it for every link in the system we are defining a macro.
+
+The parameters to be given are:
+1. mass value
+2. inertial matrix values
+
+These values can be obtained from desing files (.stl) or from weighing original equipment.
+
+```xml
+<!--Inertial Macro-->
+  <xacro:macro name="default_inertial" params="mass ixx:=1 ixy:=0 ixz:=0 iyy:=1 iyz:=0 izz:=1">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+    </inertial>
+  </xacro:macro>
+<!--Inertial Macro-->
 ```
-if(fx >= 1 && fy >= 1 && mod(fx,2)==1 && mod(fy,2)==1)
-    fprintf('Filter size is valid \n');    
-else
-    msg = 'Filter size is not valid. Please enter positive odd*odd filter \n';
-    error(msg)
-    return
-end  
+
+### Arm Link Macro
+
+Since there are more than one arm link and they are most likely to be the same we are defining a macro for the arm links.
+
+**The parameters:**
+
+1. suffix: Specific name to be given to the arm (link naming follows: armLink${suffix})
+2. parent: Parent of the created link (joint naming follows: ${parent}_armLink${suffix}_joint)
+3. reflect: Later to be used if arm link wanted to be created in different axis.
+4. height: Height of the arm
+5. mesh_path: For visualisation, full path of the mesh file
+6. joint_type: revolute, prismatic, continuous, fixed (http://wiki.ros.org/urdf/XML/joint)
+7. lower_limit, upper_limit: lower and upper limits of the revolute and prismatic joints.
+8. axis_x, axis_y, axis_z: axis which revolute joint revolutes around - set to '1'
+9. inertia matrix values: Can be obtaiend from design files
+
+For arm links transmission files 'PositionJointInterface' is preferred. While sending Dynamixel radian values will be converted to the torque values.
+
+```xml
+<!--Arm Link Macro-->
+  <xacro:macro name="arm_link" params="suffix parent reflect height color mesh_path mass joint_type lower_limit upper_limit axis_x axis_y axis_z ixx:=1 ixy:=0 ixz:=0 iyy:=1 iyz:=0 izz:=1">
+    <link name="armLink${suffix}">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <!--mesh filename="package://innomech/meshes/linked_mx_64t.stl" scale="0.01 0.01 0.01"/-->
+          <mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+        </geometry>
+        <material name="${color}"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </collision>
+      <xacro:default_inertial mass="${mass}" ixx="${ixx}"  ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+    </link> 
+
+    <!-- Joint-->
+    <joint name="${parent}_armLink${suffix}_joint" type="${joint_type}">
+      <parent link="${parent}"/>
+      <child link="armLink${suffix}"/>
+      <origin xyz="0 0 ${height}" rpy="0 0 0"/>
+      <axis xyz="${axis_x} ${axis_y} ${axis_z}"/>
+      <limit velocity="4.8" effort="1" lower="${lower_limit}" upper="${upper_limit}" />
+    </joint>
+
+    <transmission name="armLink${suffix}_transmission" type="SimpleTransmission">
+      <type>transmission_interface/SimpleTransmission</type>
+      <actuator name="$armLink${suffix}_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+      <joint name="${parent}_armLink${suffix}_joint">
+        <hardwareInterface>PositionJointInterface</hardwareInterface>
+      </joint>
+    </transmission>
+  </xacro:macro>
+  <!--Arm Link Macro-->
 ```
 
-Calculating padding size according to the filter height and width. Create padded image with '0' as padding.
+### Wheel Macro
+
+Altough there are only two wheels, since they are sharing common parameters defined a wheel macro.
+
+**The parameters:**
+
+1. suffix: Specific name to be given to the wheel (link naming follows: wheel_${suffix})
+2. parent: Parent of the created wheel (joint naming follows: wheel_${suffix}_joint)
+3. reflect: Rotate the wheel correct position (1 for left wheel and -1 for right wheel)
+4. height: Radius of the wheel
+5. mesh_path: For visualisation, full path of the mesh file
+6. joint_type: continuous, unless defined explicitly
+7. inertia matrix values: Can be obtaiend from design files
+
+While in arm link transmissions 'PositionJointInterface' is preferred, in wheel's 'VelocityJointInterface' is preferred due to nature of the wheels. 
+
+```xml
+<!--Wheel Macro-->
+  <xacro:macro name="wheel_link" params="suffix parent reflect height color mesh_path mass joint_type:=continuous ixx:=1 ixy:=0 ixz:=0 iyy:=1 iyz:=0 izz:=1">
+    <link name="wheel_${suffix}">
+      <visual>
+        <origin xyz="0 0 0" rpy="${-reflect*pi/2} 0 0"/>
+        <geometry>
+          <!--mesh filename="package://innomech/meshes/wheel_left_link2.stl" scale="0.01 0.01 0.01"/-->
+          <mesh filename="${mesh_path}" scale="0.01 0.01 0.01"/>
+        </geometry>
+        <material name="${color}"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="${-reflect*pi/2} 0 0"/>
+        <geometry>
+          <cylinder radius="0.06" length="0.025"/>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.05</mu>
+              <mu2>0.05</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+      <xacro:default_inertial mass="${mass}"/>
+    </link> 
+
+    <!-- Joint-->
+    <joint name="wheel_${suffix}_joint" type="${joint_type}">
+      <parent link="${parent}"/>
+      <child link="wheel_${suffix}"/>
+      <origin xyz="-0.04 ${reflect*0.13} 0.05" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <!--limit velocity="4.8" effort="1" lower="${-pi}" upper="${pi}" /-->
+    </joint>
+
+    <transmission name="wheel_${suffix}_transmission" type="SimpleTransmission">
+      <type>transmission_interface/SimpleTransmission</type>
+      <actuator name="$wheel_${suffix}_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+        <hardwareInterface>VelocityJointInterface</hardwareInterface>
+      </actuator>
+
+      <joint name="wheel_${suffix}_joint">
+        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      </joint>
+    </transmission>
+  </xacro:macro>
+<!--Wheel Macro-->
 ```
-padding_horizontal = (fx-1)/2;
-padding_vertical = (fy-1)/2;
-
-padded_img = padarray(image,[padding_horizontal,padding_vertical],0);
-```
-
-Creating empty convoluted image to later fill in. For every color depth (Gray=1, Colored=3) filter recalculates pixel values and returns sum as convoluted image pixel.
-```
-convoluted_img = zeros(size(image));
-
-for d = 1:color_depth
-    for i = 1:img_size_x
-        for j = 1:img_size_y
-
-          i,i+(2*padding_horizontal),j,j+(2*padding_vertical),d);
-           temp = padded_img(i:i+(2*padding_horizontal),j:j+(2*padding_vertical),d) .* filter;
-           convoluted_img(i,j,d) = sum(temp(:));
-        end
-    end
-end
-```
-
-## gen_hybrid_image( image1, image2, cutoff_frequency ):
-
-Hybrid image generator takes in 2 images and cutoff_frequency. 'cutoff_frequency' is the standard deviation, in pixels, of the Gaussian blur that will remove high frequencies. Tried 3 different values, 3,5,7.
-
-### cutoff_frequency: 3-5-7
-
-#### High Frequency Images
-
-<img width="200" alt="High Frequency Image cutoff_frequency 3" src="/imgs/high_frequencies_3.jpg"><img width="200" alt="High Frequency Image cutoff_frequency 5" src="/imgs/high_frequencies_5.jpg">
-<img width="200" alt="High Frequency Image cutoff_frequency 7" src="/imgs/high_frequencies_7.jpg">
-
-As the cutoff_frequency increases from 3 to 7, cat image becomes sharper. To achieve this solution, subtracted low frequency image from the original image.
-
-#### Low Frequency Images
-
-<img width="200" alt="low Frequency Image cutoff_frequency 3" src="/imgs/low_frequencies_3.jpg"><img width="200" alt="low Frequency Image cutoff_frequency 5" src="/imgs/low_frequencies_5.jpg">
-<img width="200" alt="low Frequency Image cutoff_frequency 7" src="/imgs/low_frequencies_7.jpg">
-
-As the cutoff_frequency increases from 3 to 7, dog image becomes more blur.
-
-#### Hybrid Images
-
-<img width="200" alt="Hybrid Image cutoff_frequency 3" src="/imgs/hybrid_image_3.jpg"><img width="200" alt="Hybrid Image cutoff_frequency 5" src="/imgs/hybrid_image_5.jpg">
-<img width="200" alt="Hybrid Image cutoff_frequency 7" src="/imgs/hybrid_image_7.jpg">
-
-As cutoff_frequency increases low frequency images becomes less visible while high frequency images becomes more visible in the hybrid image.
-
-
-#### Hybrid Image Scales
-
-<img width="600" alt="Hybrid Image cutoff_frequency 3" src="/imgs/hybrid_image_scales_3.jpg">
-<img width="600" alt="Hybrid Image cutoff_frequency 5" src="/imgs/hybrid_image_scales_5.jpg">
-<img width="600" alt="Hybrid Image cutoff_frequency 7" src="/imgs/hybrid_image_scales_7.jpg">
-
-From scaling hybrid images it can be seen that when cutoff_frequency is 5, selected cat and dog images blends well. 
