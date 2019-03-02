@@ -23,7 +23,6 @@ Instead of using human force, our robot will do the removing of the asbestos. Th
 |<img width="300" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="imgs/plan_rob.jpg">|<img width="300" alt="Asbestos Removal - https://cdn.nabholz.com/wp-content/uploads/2017/02/Asbestos-Abatement-Header.jpg" src="imgs/IMG_20190207_113329.jpg">|
 
 ## Configuration
-<<<<<<< HEAD
 
 ### Hardware 
 

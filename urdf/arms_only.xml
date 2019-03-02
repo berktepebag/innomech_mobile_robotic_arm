@@ -1,0 +1,18 @@
+
+
+	<!--Link0 -->
+	<xacro:arm_link suffix="0" parent="base_link" reflect="1" height="0.25" color="red" mesh_path="package://innomech/meshes/mx-64t2.stl" mass="0.135" joint_type="revolute" lower_limit="${-pi}" upper_limit="${pi}" axis_x="0" axis_y="0" axis_z="1"/>
+	<!-- Link0 -->
+
+	<!-- Link1 -->
+	<xacro:arm_link suffix="1" parent="armLink0" reflect="1" height="0.0" color="red" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
+	<!-- Link1 -->
+
+	<!-- Link2 -->
+	<xacro:arm_link suffix="2" parent="armLink1" reflect="1" height="0.12" color="green" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
+	<!-- Link2 -->
+
+	<!-- Link3 -->
+	<xacro:arm_link suffix="3" parent="armLink2" reflect="1" height="0.12" color="grey" mesh_path="package://innomech/meshes/linked_mx_64t.stl" mass="0.168" joint_type="revolute" lower_limit="${-pi/4}" upper_limit="${pi/4}" axis_x="0" axis_y="1" axis_z="0" ixx="0.000208661" ixy="0.000000046" ixz="-0.000001178" iyy="0.000000046" iyz="-0.000001178" izz="-0.000001178"/>
+	<!-- Link3 --> -->
+	
