@@ -100,8 +100,8 @@ double TeleopInnomechRobot::pidContoller(){
   double current_time = ros_clock_sec;
   double dt = current_time - previous_time;
 
-  double Kp = 10;
-  double Kd = 1;
+  double Kp = 1;
+  double Kd = 0.1;
   double linear_error = (linear_speed_goal-linear_odom_x);
 
   cout << "***---------***" <<endl;
@@ -172,8 +172,8 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
  //Mobile Base Movement
 
- min_linear_speed= -0.5;
- max_linear_speed= 1.0;
+ min_linear_speed= -0.05;
+ max_linear_speed= 0.1;
 
  //Stop the robot
  if (joy->buttons[9])
@@ -183,11 +183,11 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
  if (joy->axes[2]<1 & linear_speed_goal>min_linear_speed)
  {
-   linear_speed_goal -= 0.005;
+   linear_speed_goal -= 0.0005;
  }
  else if(joy->axes[5]<1 & linear_speed_goal<=max_linear_speed)
  {
-  linear_speed_goal += 0.005;
+  linear_speed_goal += 0.0005;
 }
 
 angular_speed_goal = joy->axes[angular_];
