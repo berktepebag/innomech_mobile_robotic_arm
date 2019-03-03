@@ -106,6 +106,7 @@ double TeleopInnomechRobot::pidContoller(){
 
   cout << "***---------***" <<endl;
   cout << "linear_speed_goal: " << linear_speed_goal << endl;
+  cout << "angular_speed_goal: " << angular_speed_goal << endl;
   cout << "linear_odom_x: " << linear_odom_x << endl;
   cout << "linear_error: " << linear_error << endl;
 
@@ -171,8 +172,8 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
  //Mobile Base Movement
 
- min_linear_speed= -2.0;
- max_linear_speed= 5.0;
+ min_linear_speed= -0.5;
+ max_linear_speed= 1.0;
 
  //Stop the robot
  if (joy->buttons[9])
@@ -182,24 +183,26 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
  if (joy->axes[2]<1 & linear_speed_goal>min_linear_speed)
  {
-   linear_speed_goal -= 0.01;
+   linear_speed_goal -= 0.005;
  }
  else if(joy->axes[5]<1 & linear_speed_goal<=max_linear_speed)
  {
-  linear_speed_goal += 0.01;
+  linear_speed_goal += 0.005;
 }
 
 angular_speed_goal = joy->axes[angular_];
-cout << "joy->axes[angular_]: " << joy->axes[angular_] << endl;
+//cout << "joy->axes[angular_]: " << joy->axes[angular_] << endl;
 
 
 }
 
 void TeleopInnomechRobot::publishSpeed(){
+  /*
   cout << "-----------------------------"<<endl;
   cout << "current linear.x: " << twist.linear.x << endl;
   cout << "current angular.y: " << twist.angular.y << endl;
-   //twist.linear.x = joy->axes[linear_];
+  */
+  //twist.linear.x = joy->axes[linear_];
   //twist.linear.x = linear_speed_goal;
   twist.linear.x = pidContoller();
   twist.angular.z = angular_speed_goal;
