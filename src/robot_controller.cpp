@@ -100,8 +100,8 @@ double TeleopInnomechRobot::pidContoller(){
   double current_time = ros_clock_sec;
   double dt = current_time - previous_time;
 
-  double Kp = 1;
-  double Kd = 0.1;
+  double Kp = 10;
+  double Kd = 1;
   double linear_error = (linear_speed_goal-linear_odom_x);
 
   cout << "***---------***" <<endl;
@@ -137,43 +137,45 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   //Arm Movement
   double link_mult[]={1.0,0.95,0.90,0.85};
   
-  arm0 = pos_link0+joy->axes[angular_arm]*link_mult[0];
-  arm1 = pos_link1+joy->axes[linear_arm] *link_mult[1];
-  arm2 = pos_link2+joy->axes[linear_arm] *link_mult[2];
-  arm3 = pos_link3+joy->axes[linear_arm] *link_mult[3];
-
-  if (joy->buttons[10])
+  if (joy->axes[angular_arm] || joy->axes[linear_arm])
   {
-   arm0 = 0;
-   arm1 = 0;
-   arm2 = 0;
-   arm3 = 0;
- }
+    arm0 = pos_link0+joy->axes[angular_arm]*link_mult[0];
+    arm1 = pos_link1+joy->axes[linear_arm] *link_mult[1];
+    arm2 = pos_link2+joy->axes[linear_arm] *link_mult[2];
+    arm3 = pos_link3+joy->axes[linear_arm] *link_mult[3];
+
+    if (joy->buttons[10])
+    {
+     arm0 = 0;
+     arm1 = 0;
+     arm2 = 0;
+     arm3 = 0;
+   }
   //cout << "arm0: " << arm0 << endl;
- std::vector<double> arm_vector;
- arm_vector.push_back(arm0);
- arm_vector.push_back(arm1);
- arm_vector.push_back(arm2);
- arm_vector.push_back(arm3);
+   std::vector<double> arm_vector;
+   arm_vector.push_back(arm0);
+   arm_vector.push_back(arm1);
+   arm_vector.push_back(arm2);
+   arm_vector.push_back(arm3);
 
 
- std_msgs::Float64MultiArray arm_msg;
+   std_msgs::Float64MultiArray arm_msg;
 
- arm_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
- arm_msg.layout.dim[0].size = 4;
- arm_msg.layout.dim[0].stride = 1;
- arm_msg.layout.dim[0].label =' ';
+   arm_msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+   arm_msg.layout.dim[0].size = 4;
+   arm_msg.layout.dim[0].stride = 1;
+   arm_msg.layout.dim[0].label =' ';
 
 
- arm_msg.data.clear();
- arm_msg.data.insert(arm_msg.data.end(), arm_vector.begin(), arm_vector.end());
+   arm_msg.data.clear();
+   arm_msg.data.insert(arm_msg.data.end(), arm_vector.begin(), arm_vector.end());
 
- arm_pub_.publish(arm_msg);
-
+   arm_pub_.publish(arm_msg);
+ }
  //Mobile Base Movement
 
- min_linear_speed= -0.05;
- max_linear_speed= 0.1;
+ min_linear_speed= -0.2;
+ max_linear_speed= 0.5;
 
  //Stop the robot
  if (joy->buttons[9])
@@ -183,11 +185,11 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 
  if (joy->axes[2]<1 & linear_speed_goal>min_linear_speed)
  {
-   linear_speed_goal -= 0.0005;
+   linear_speed_goal -= 0.001;
  }
  else if(joy->axes[5]<1 & linear_speed_goal<=max_linear_speed)
  {
-  linear_speed_goal += 0.0005;
+  linear_speed_goal += 0.001;
 }
 
 angular_speed_goal = joy->axes[angular_];

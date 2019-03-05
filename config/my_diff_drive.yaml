@@ -30,8 +30,8 @@ mobile_base_controller:
       max_velocity           : 2.0  # m/s
       min_velocity           : -1.0 # m/s
       has_acceleration_limits: true
-      max_acceleration       : 0.007  # m/s^2
-      min_acceleration       : -0.003 # m/s^2
+      max_acceleration       : 0.07  # m/s^2
+      min_acceleration       : -0.03 # m/s^2
       has_jerk_limits        : true
       max_jerk               : 1.0  # m/s^3
   angular:
