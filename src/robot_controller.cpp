@@ -62,6 +62,8 @@ angular_arm(3),
 linear_arm(4)
 {
 
+  linear_speed_goal=0;
+
   nh_.param("axis_linear", linear_, linear_);
   nh_.param("arm_axis_linear", linear_arm, linear_arm);
 
