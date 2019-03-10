@@ -143,7 +143,7 @@ double TeleopInnomechRobot::pidContoller(double current, double pid_goal, double
   
   double pid_command = 0;
 
-  if (abs(pid_error)>0.3 )
+  if (abs(pid_error)>0.1 )
   {
     double de = *previous_pid_error - pid_error;
     pid_command = Kp * pid_error + Kd * (de/dt);
