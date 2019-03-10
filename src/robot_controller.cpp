@@ -7,6 +7,7 @@
 #include <nav_msgs/Odometry.h>
 #include <rosgraph_msgs/Clock.h>
 #include <iostream>
+#include <math.h>
 
 using namespace std;
 
@@ -15,7 +16,7 @@ class TeleopInnomechRobot
 public:
   TeleopInnomechRobot();
   void publishSpeed();
-  double pidContoller();
+  double pidContoller(double current, double pid_goal, double* previous_pid_error, double* previous_time, double KP, double KD);
 
 private:
   void joyCallback(const sensor_msgs::Joy::ConstPtr& joy);
@@ -31,15 +32,22 @@ private:
   double l_scale_, a_scale_;
   double pos_link0,pos_link1,pos_link2,pos_link3;
   double link0_mult,link1_mult,link2_mult,link3_mult;
-  double arm0,arm1,arm2,arm3;
+  double arm0_goal,arm1_goal,arm2_goal,arm3_goal;
   std_msgs::Float64 arm0_msg,arm1_msg,arm2_msg,arm3_msg;
   double linear_axe,angular_axe;
+
+  double mobilebase_pid_error, mobilebase_last_pid_time;
+  double arm0_pid_error, arm0_last_pid_time;
+  double arm1_pid_error, arm1_last_pid_time;
+  double arm2_pid_error, arm2_last_pid_time;
+  double arm3_pid_error, arm3_last_pid_time;
+  bool move_arm;
 
   int current_joint;
 
   //Timing
   double ros_clock_sec;
-  double previous_time;
+  
 
   //Speed limits
   double min_linear_speed,max_linear_speed;
@@ -48,7 +56,8 @@ private:
   //Speed values from odometer
   double linear_odom_x, angular_odom_z;
 
-  double previous_linear_error;
+  //double previous_pid_error;
+  //double previous_time;
   
   ros::Publisher vel_pub_;
   ros::Publisher arm_pub_;
@@ -75,6 +84,12 @@ linear_arm(4)
 
   linear_speed_goal=0;
   current_joint = -1;
+  mobilebase_pid_error, mobilebase_last_pid_time,
+  arm0_pid_error, arm0_last_pid_time,
+  arm1_pid_error, arm1_last_pid_time,
+  arm2_pid_error, arm2_last_pid_time,
+  arm3_pid_error, arm3_last_pid_time = 0;
+  move_arm = false;
 
   nh_.param("axis_linear", linear_, linear_);
   nh_.param("arm_axis_linear", linear_arm, linear_arm);
@@ -112,36 +127,30 @@ void TeleopInnomechRobot::odomCallback(const nav_msgs::Odometry::ConstPtr& odom_
   //cout << "odom_msg: " << linear_odom_x << endl; 
 }
 
-double TeleopInnomechRobot::pidContoller(){
+double TeleopInnomechRobot::pidContoller(double current, double pid_goal, double* previous_pid_error, double* previous_time, double KP, double KD){
 
-  double current_time = ros_clock_sec;
-  double dt = current_time - previous_time;
-
-  double Kp = 100;
-  double Kd = 10;
-  double linear_error = (linear_speed_goal-linear_odom_x);
-
-  /*
-  cout << "***---------***" <<endl;
-  cout << "linear_speed_goal: " << linear_speed_goal << endl;
-  cout << "angular_speed_goal: " << angular_speed_goal << endl;
-  cout << "linear_odom_x: " << linear_odom_x << endl;
-  cout << "linear_error: " << linear_error << endl;
-  */
-  double linear_command = 0;
-
-  if (abs(linear_error)>0.01 )
+  if (*previous_time == 0)
   {
-    double de = previous_linear_error- linear_error;
-    linear_command = Kp * linear_error + Kd * (de/dt);
-    previous_linear_error = linear_error; 
-  //cout << "time difference: "<< dt << endl;
-    previous_time = ros_clock_sec;
-  //cout << "linear_command: " <<linear_command << endl;
-
+    *previous_time = ros_clock_sec;
   }
 
-  return linear_command;
+  double current_time = ros_clock_sec;
+  double dt = current_time - *previous_time;
+
+  double Kp = KP;
+  double Kd = KD;
+  double pid_error = (pid_goal-current); 
+  
+  double pid_command = 0;
+
+  if (abs(pid_error)>0.3 )
+  {
+    double de = *previous_pid_error - pid_error;
+    pid_command = Kp * pid_error + Kd * (de/dt);
+    *previous_pid_error = pid_error;         
+    *previous_time = ros_clock_sec;
+  }  
+  return pid_command;  
 }
 
 void TeleopInnomechRobot::jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_msg){
@@ -156,10 +165,18 @@ void TeleopInnomechRobot::jointStateCallback(const sensor_msgs::JointState::Cons
 void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
 {
   //Arm Movement
-  double link_mult[]={0.5,0.25,0.25,0.25};  
+  double link_mult[]={0.5,M_PI/4,M_PI/4,M_PI/4};  
 
   linear_axe = joy->axes[linear_arm];
   angular_axe = joy->axes[angular_arm];
+  int btn_a = joy->buttons[0]; //A
+  int btn_b = joy->buttons[1]; //B
+
+  if (btn_a)
+  {
+    move_arm = !move_arm;
+    cout << "move_arm: " << move_arm << endl;
+  }
 
   if (joy->buttons[4] && current_joint > 0)
   {
@@ -173,54 +190,40 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   }
 
 
-  
   if (joy->axes[angular_arm] || joy->axes[linear_arm])
   { 
-    cout << "Current Joint: " << current_joint <<endl;
-    if (current_joint==0)
-    {
-      arm0 = pos_link0 + angular_axe*link_mult[0];
-      /*cout << "joy->axes[angular_arm]*link_mult[0]: " << angular_axe*link_mult[0] <<endl;
-      cout << "pos_link0: " << pos_link0 << endl;
-      cout << "arm0: " << arm0_msg.data << endl;*/
-    }
-    else if (current_joint==1){
-      arm1 = pos_link1 +joy->axes[linear_arm] *link_mult[1];
-      /*cout << "joy->axes[linear_arm]*link_mult[1]: " << joy->axes[linear_arm]*link_mult[1] <<endl;
-      cout << "pos_link1: " << pos_link1 << endl;
-      cout << "arm1: " << arm1_msg.data << endl;*/
-    }
-    else if (current_joint==2){    
-      arm2 = pos_link2 + linear_axe *link_mult[2];
-      /*cout << "linear_axe*link_mult[2]: " << linear_axe*link_mult[2] <<endl;
-      cout << "pos_link2: " << pos_link2 << endl;
-      cout << "arm2: " << arm2_msg.data << endl;*/
-    }
-    else if (current_joint==3){
-      arm3 = pos_link3 + linear_axe *link_mult[3];
-      /*cout << "linear_axe*link_mult[3]: " << linear_axe*link_mult[3] <<endl;
-      cout << "pos_link3: " << pos_link3 << endl;
-      cout << "arm3: " << arm3_msg.data << endl;*/
-    }
+    if (!move_arm) cout << "Arm locked, press A to unlock the arm!" << endl;
 
+    else{
 
-    if (joy->buttons[10]){
-     arm0 = 0;
-     arm1 = 0;
-     arm2 = 0;
-     arm3 = 0; 
+      cout << "Current Joint: " << current_joint <<endl;
+      if (current_joint==0)
+      {
+        arm0_goal = pos_link0 + angular_axe*link_mult[0];      
+      }
+      else if (current_joint==1 && (arm1_goal<=M_PI/4 || arm1_goal>=-M_PI/4)){
+        arm1_goal = pos_link1 + linear_axe *link_mult[1];      
+      }
+      else if (current_joint==2){    
+        arm2_goal = pos_link2 + linear_axe *link_mult[2];      
+      }
+      else if (current_joint==3){
+        arm3_goal = pos_link3 + linear_axe *link_mult[3];   
+      }
+    //Reset the arm to original position
+      if (joy->buttons[10]){
+       arm0_goal = 0;
+       arm1_goal = 0;
+       arm2_goal = 0;
+       arm3_goal = 0;
+     }
+     arm0_msg.data = arm0_goal;
+     arm1_msg.data = arm1_goal;
+     arm2_msg.data = arm2_goal;
+     arm3_msg.data = arm3_goal;
    }
-
-   arm0_msg.data = arm0;
-   arm1_msg.data = arm1;
-   arm2_msg.data = arm2;
-   arm3_msg.data = arm3;
-
-
  }
-
  //Mobile Base Movement
-
  min_linear_speed= -0.2;
  max_linear_speed= 0.5;
 
@@ -238,15 +241,14 @@ void TeleopInnomechRobot::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
  {
   linear_speed_goal += 0.001;
 }
-
 angular_speed_goal = joy->axes[angular_];
-//cout << "joy->axes[angular_]: " << joy->axes[angular_] << endl;
-
-
 }
 
 void TeleopInnomechRobot::publishSpeed(){
-  twist.linear.x = pidContoller();
+  //double pidContoller(double current, double pid_goal, double previous_pid_error, double previous_time);
+
+  twist.linear.x = pidContoller(linear_odom_x, linear_speed_goal,&mobilebase_pid_error,&mobilebase_last_pid_time,100,10);
+
   twist.angular.z = angular_speed_goal;
   vel_pub_.publish(twist);
 
@@ -254,6 +256,7 @@ void TeleopInnomechRobot::publishSpeed(){
   arm1_pub_.publish(arm1_msg);
   arm2_pub_.publish(arm2_msg);
   arm3_pub_.publish(arm3_msg);
+  
 }
 
 

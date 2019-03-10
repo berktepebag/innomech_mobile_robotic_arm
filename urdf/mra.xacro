@@ -34,6 +34,14 @@
 	<material name="brown">
 		<color rgba="${222/255} ${207/255} ${195/255} 1.0"/>
 	</material>
+
+	<gazebo reference="base_link"><material>Gazebo/Black</material></gazebo>
+	<gazebo reference="wheel_left"><material>Gazebo/Grey</material></gazebo>
+	<gazebo reference="wheel_right"><material>Gazebo/Grey</material></gazebo>
+	<gazebo reference="armLink0"><material>Gazebo/Orange</material></gazebo>
+	<gazebo reference="armLink1"><material>Gazebo/Orange</material></gazebo>
+	<gazebo reference="armLink2"><material>Gazebo/Orange</material></gazebo>
+	<gazebo reference="armLink3"><material>Gazebo/Orange</material></gazebo>
 	<!--Materials End-->
 
 	<xacro:property name="base_height" value="0.2" /> <!--x direction -->
