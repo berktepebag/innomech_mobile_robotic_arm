@@ -1,7 +1,0 @@
-gazebo_ros_controller:
-  type: gazebo_ros_control
-  pid_gains:
-    base_link_armLink0_joint: {p: 100.0, i: 0.01, d: 10.0}
-    armLink0_armLink1_joint: {p: 100.0, i: 0.01, d: 10.0}
-    armLink1_armLink2_joint: {p: 100.0, i: 0.01, d: 10.0}
-    armLink2_armLink3_joint: {p: 100.0, i: 0.01, d: 10.0}

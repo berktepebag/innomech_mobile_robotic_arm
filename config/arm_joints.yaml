@@ -6,18 +6,22 @@
 #  - armLink2_armLink3_joint
 
 joint0_position_controller:
-    type: effort_controllers/JointPositionController
-    joint: base_link_armLink0_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
+    type: position_controllers/JointPositionController
+    joint: base_link_armLink0_joint   
 joint1_position_controller:
-    type: effort_controllers/JointPositionController
+    type: position_controllers/JointPositionController
     joint: armLink0_armLink1_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
 joint2_position_controller:
-    type: effort_controllers/JointPositionController
+    type: position_controllers/JointPositionController
     joint: armLink1_armLink2_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
 joint3_position_controller:
-    type: effort_controllers/JointPositionController
+    type: position_controllers/JointPositionController
     joint: armLink2_armLink3_joint
-    pid: {p: 100.0, i: 0.01, d: 10.0}
+
+gazebo_ros_control:
+  pid_gains:
+    base_link_armLink0_joint: {p: 10.0, i: 0.001, d: 0.01}
+    armLink0_armLink1_joint: {p: 10.0, i: 0.001, d: 0.01}
+    armLink1_armLink2_joint: {p: 10.0, i: 0.001, d: 0.01}
+    armLink2_armLink3_joint: {p: 10.0, i: 0.001, d: 0.01}
+
