@@ -1,3 +1,5 @@
+### *** Archieved: As this repo is and will not updated anymore, it is archieved. ***
+
 # INNOMECH Master Degree - Mobile Robotic Arm for Asbestos Removal
 
 ## What is Asbestos and why it is harmful?
